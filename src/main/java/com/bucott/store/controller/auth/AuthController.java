@@ -103,17 +103,16 @@ public class AuthController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }            
-
-    // refresh token endpoint
     
-    // logout endpoint
+    // NO FUNCIONA, ASEGURAR QUE LA COOKIE Y LA SESION PERSISTEN
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
         log.info("Logout attempt");
 
         userDetailsService.logout(response);
-        Map<String, Object> logoutResponse = Map.of("message", "Logout successful");
-        logoutResponse.put("success", true);
+        
+        Map<String, Object> logoutResponse= new HashMap<>();
+        logoutResponse.put("message", "Logged out successfully");
 
         return ResponseEntity.ok(logoutResponse);
     }
@@ -124,6 +123,7 @@ public class AuthController {
         return ResponseEntity.ok(userInfo);
     }
 
+    // NO FUNCIONA, ASAEGURAR QUE LA COOKIE PERSISTE
     @GetMapping("/verify")
     public ResponseEntity<?> verifyToken(HttpServletRequest request) {
         boolean isValid = userDetailsService.validateTokenFromCookie(request.getCookies());

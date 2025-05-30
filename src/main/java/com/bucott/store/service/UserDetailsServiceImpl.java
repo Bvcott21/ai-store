@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import com.bucott.store.dto.auth.LoginRequestDTO;
 import com.bucott.store.dto.auth.LoginResponseDTO;
@@ -25,6 +26,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+@Service
 public class UserDetailsServiceImpl implements UserDetailsService {
     private static final Logger log = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
     private static final String AUTH_COOKIE_NAME;
