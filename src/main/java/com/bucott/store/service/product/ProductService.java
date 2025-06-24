@@ -1,13 +1,16 @@
 package com.bucott.store.service.product;
 
+import com.bucott.store.dto.common.PagedResponse;
 import com.bucott.store.dto.product.ProductCreateUpdateRequestDTO;
 import com.bucott.store.dto.product.ProductCreateUpdateResponseDTO;
+import com.bucott.store.dto.product.ProductInfoDTO;
 import com.bucott.store.model.product.Product;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 public interface ProductService {
+    PagedResponse<ProductInfoDTO> getAllProducts(int page, int size, String sortBy, String sortDir);
     List<Product> getAllProducts();
     Product getProductById(Long productId);
     ProductCreateUpdateResponseDTO createProduct(ProductCreateUpdateRequestDTO product);

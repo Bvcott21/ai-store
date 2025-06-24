@@ -1,30 +1,65 @@
 package com.bucott.store.service.product;
 
+import com.bucott.store.dto.common.PagedResponse;
 import com.bucott.store.dto.product.ProductCreateUpdateRequestDTO;
 import com.bucott.store.dto.product.ProductCreateUpdateResponseDTO;
+import com.bucott.store.dto.product.ProductInfoDTO;
 import com.bucott.store.exception.product.ProductNotFoundException;
+import com.bucott.store.mapper.ProductMapper;
 import com.bucott.store.model.product.Product;
 import com.bucott.store.model.product.ProductCategory;
 import com.bucott.store.repository.product.ProductCategoryRepository;
 import com.bucott.store.repository.product.ProductRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
     private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
     private final ProductRepository productRepository;
     private final ProductCategoryRepository productCategoryRepository;
+    private final ProductMapper productMapper;
 
-    public ProductServiceImpl(ProductRepository productRepository, ProductCategoryRepository productCategoryRepository) {
+    public ProductServiceImpl(ProductRepository productRepository, ProductCategoryRepository productCategoryRepository, ProductMapper productMapper) {
         this.productRepository = productRepository;
         this.productCategoryRepository = productCategoryRepository;
+        this.productMapper = productMapper;
+    }
+
+    @Override
+    public PagedResponse<ProductInfoDTO> getAllProducts(int page, int size, String sortBy, String sortDir) {
+        log.info("Fetching paginated products: page={}, size={}, sortBy={}, sortDir={}", page, size, sortBy, sortDir);
+        
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? 
+                Sort.by(sortBy).descending() : 
+                Sort.by(sortBy).ascending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Product> productPage = productRepository.findAll(pageable);
+        
+        List<ProductInfoDTO> productDTOs = productPage.getContent()
+                .stream()
+                .map(productMapper::toInfoDTO)
+                .collect(Collectors.toList());
+        
+        return PagedResponse.of(
+                productDTOs,
+                productPage.getNumber(),
+                productPage.getSize(),
+                productPage.getTotalElements(),
+                productPage.getTotalPages()
+        );
     }
 
     @Override
@@ -49,7 +84,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductCreateUpdateResponseDTO createProduct(ProductCreateUpdateRequestDTO productDTO) {
         log.info("Creating new product: {}", productDTO);
 
-        if (productDTO.getPrice() == null || BigDecimal.valueOf(productDTO.getPrice()).compareTo(BigDecimal.ZERO) <= 0) {
+        if (productDTO.getPrice() == null || productDTO.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
             log.error("Invalid product price: {}", productDTO.getPrice());
             throw new IllegalArgumentException("Product price must be greater than zero");
         }
@@ -62,8 +97,8 @@ public class ProductServiceImpl implements ProductService {
         Product product = new Product(
                 productDTO.getName(),
                 productDTO.getDescription(),
-                BigDecimal.valueOf(productDTO.getPrice()),
-                BigDecimal.valueOf(productDTO.getCost()),
+                productDTO.getPrice(),
+                productDTO.getCost(),
                 productDTO.getCurrentStock()
         );
 
@@ -123,7 +158,7 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductNotFoundException(productId);
         }
 
-        if (productDTO.getPrice() == null || BigDecimal.valueOf(productDTO.getPrice()).compareTo(BigDecimal.ZERO) <= 0) {
+        if (productDTO.getPrice() == null || productDTO.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
             log.error("Invalid product price: {}", productDTO.getPrice());
             throw new IllegalArgumentException("Product price must be greater than zero");
         }
@@ -136,8 +171,8 @@ public class ProductServiceImpl implements ProductService {
         Product product = new Product(
                 productDTO.getName(),
                 productDTO.getDescription(),
-                BigDecimal.valueOf(productDTO.getPrice()),
-                BigDecimal.valueOf(productDTO.getCost()),
+                productDTO.getPrice(),
+                productDTO.getCost(),
                 productDTO.getCurrentStock()
         );
 
