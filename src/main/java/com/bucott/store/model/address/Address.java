@@ -1,9 +1,6 @@
 package com.bucott.store.model.address;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -27,4 +24,7 @@ public class Address {
 
     @NotNull
     private String country;
+
+    @NotNull @Enumerated(EnumType.STRING)
+    private AddressType addressType;
 }
