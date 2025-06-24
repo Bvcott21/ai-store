@@ -4,7 +4,8 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .env
-.claude
+CLAUDE.md
+LEARNING_ROADMAP.md
 
 ### STS ###
 .apt_generated
