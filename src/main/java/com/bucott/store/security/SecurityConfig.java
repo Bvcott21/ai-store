@@ -8,7 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.bucott.store.service.UserDetailsServiceImpl;
+import com.bucott.store.service.user.UserDetailsServiceImpl;
 import com.bucott.store.util.JwtUtil;
 
 @Configuration
@@ -38,7 +38,10 @@ public class SecurityConfig {
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/api/v1/auth/**",
+                    "/api/v1/auth/login",
+                    "/api/v1/auth/register",
+                    "/api/v1/auth/logout",
+                    "/api/v1/products/**",
                     "/api/v1/docs",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",

@@ -16,15 +16,15 @@ import com.bucott.store.dto.auth.LoginRequestDTO;
 import com.bucott.store.dto.auth.LoginResponseDTO;
 import com.bucott.store.dto.auth.RegisterRequestDTO;
 import com.bucott.store.dto.auth.RegisterResponseDTO;
-import com.bucott.store.service.UserDetailsServiceImpl;
+import com.bucott.store.service.user.UserDetailsServiceImpl;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -35,7 +35,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class AuthController {
     // logging dependency
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
-    UserDetailsServiceImpl userDetailsService;
+    UserDetailsServiceImpl  userDetailsService;
 
     public AuthController(UserDetailsServiceImpl userDetailsService) {
         this.userDetailsService = userDetailsService;
@@ -59,14 +59,15 @@ public class AuthController {
         }
     )
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequestDTO, HttpServletResponse response) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequestDTO) {
         log.info("Login attempt for user: {}", loginRequestDTO.getUsernameOrEmail());
         
         try {
-            var loginResponse = userDetailsService.authenticate(loginRequestDTO, response);
+            var loginResponse = userDetailsService.authenticate(loginRequestDTO);
             return ResponseEntity.ok(loginResponse);
         } catch(Exception e) {
-            Map<String, Object> errorResponse = Map.of("error", e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
             errorResponse.put("message", "Login failed: " + e.getMessage());
             errorResponse.put("success", false);
             return ResponseEntity.badRequest().body(errorResponse);
@@ -90,43 +91,52 @@ public class AuthController {
         }
     )
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequestDTO registerRequestDTO, HttpServletResponse response) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequestDTO registerRequestDTO) {
         log.info("Register attempt for user: {}", registerRequestDTO.getUsername());
         
         try {
-            var registerResponse = userDetailsService.register(registerRequestDTO, response);
+            var registerResponse = userDetailsService.register(registerRequestDTO);
             return ResponseEntity.ok(registerResponse);
         } catch(Exception e) {
-            Map<String, Object> errorResponse = Map.of("error", e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
             errorResponse.put("message", "Registration failed: " + e.getMessage());
             errorResponse.put("success", false);
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }            
     
-    // NO FUNCIONA, ASEGURAR QUE LA COOKIE Y LA SESION PERSISTEN
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
+    public ResponseEntity<?> logout() {
         log.info("Logout attempt");
-
-        userDetailsService.logout(response);
         
         Map<String, Object> logoutResponse= new HashMap<>();
-        logoutResponse.put("message", "Logged out successfully");
+        logoutResponse.put("message", "Logged out successfully - please remove token from client");
 
         return ResponseEntity.ok(logoutResponse);
     }
     
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
-        var userInfo = userDetailsService.getCurrentUser(request);
+    public ResponseEntity<?> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+            String username = authentication.getName();
+            var userInfo = userDetailsService.getUserInfoByUsername(username);
+            return ResponseEntity.ok(userInfo);
+        }
+        
+        var userInfo = userDetailsService.getUserInfoByUsername(null);
         return ResponseEntity.ok(userInfo);
     }
 
-    // NO FUNCIONA, ASAEGURAR QUE LA COOKIE PERSISTE
     @GetMapping("/verify")
-    public ResponseEntity<?> verifyToken(HttpServletRequest request) {
-        boolean isValid = userDetailsService.validateTokenFromCookie(request.getCookies());
+    public ResponseEntity<?> verifyToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        boolean isValid = authentication != null && 
+                         authentication.isAuthenticated() && 
+                         !"anonymousUser".equals(authentication.getName());
 
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("authenticated", isValid);

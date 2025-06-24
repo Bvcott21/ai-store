@@ -1,4 +1,4 @@
-package com.bucott.store.service;
+package com.bucott.store.service.user;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,6 +6,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bucott.store.dto.auth.LoginRequestDTO;
 import com.bucott.store.dto.auth.LoginResponseDTO;
@@ -18,36 +19,29 @@ import com.bucott.store.exception.user.UserNotFoundException;
 import com.bucott.store.model.user.Authority;
 import com.bucott.store.model.user.Role;
 import com.bucott.store.model.user.User;
-import com.bucott.store.repository.UserRepository;
+import com.bucott.store.repository.user.RoleRepository;
+import com.bucott.store.repository.user.UserRepository;
 import com.bucott.store.util.JwtUtil;
 
-import io.github.cdimascio.dotenv.Dotenv;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
     private static final Logger log = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
-    private static final String AUTH_COOKIE_NAME;
-    private static final int COOKIE_MAX_AGE;
     private final UserRepository userRepo;
+    private final RoleRepository roleRepo;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     
-    public UserDetailsServiceImpl(UserRepository userRepo, JwtUtil jwtUtil, PasswordEncoder passwordEncoder) {
+    public UserDetailsServiceImpl(UserRepository userRepo, RoleRepository roleRepo, JwtUtil jwtUtil, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
+        this.roleRepo = roleRepo;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
     }
 
-    static {
-        Dotenv dotenv = Dotenv.load();
-        AUTH_COOKIE_NAME = dotenv.get("AUTH_COOKIE_NAME");
-        COOKIE_MAX_AGE = Integer.parseInt(dotenv.get("COOKIE_MAX_AGE"));
-    }
 
     @Override
+    @Transactional(readOnly = true)
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
                 log.info("Attempting to load user by username: {}", username);
                 User user = userRepo.findByUsername(username)
@@ -57,6 +51,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
                 return org.springframework.security.core.userdetails.User.builder()
                                 .username(user.getUsername())
+                                .password(user.getPassword())
                                 .authorities(user.getRoles().stream()
                                                 .map(role -> role.getAuthority().name())
                                                 .toArray(String[]::new))
@@ -73,6 +68,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
                 return org.springframework.security.core.userdetails.User.builder()
                                 .username(user.getUsername())
+                                .password(user.getPassword())
                                 .authorities(user.getRoles().stream()
                                                 .map(role -> role.getAuthority().name())
                                                 .toArray(String[]::new))
@@ -87,6 +83,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
                 return org.springframework.security.core.userdetails.User.builder()
                                 .username(user.getUsername())
+                                .password(user.getPassword())
                                 .authorities(user.getRoles().stream()
                                                 .map(role -> role.getAuthority().name())
                                                 .toArray(String[]::new))
@@ -95,7 +92,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
 
     @Override
-        public LoginResponseDTO authenticate(LoginRequestDTO requestDto, HttpServletResponse response) throws UserNotFoundException, InvalidCredentialsException {
+        public LoginResponseDTO authenticate(LoginRequestDTO requestDto) throws UserNotFoundException, InvalidCredentialsException {
                 User user = userRepo.findByUsernameOrEmail(requestDto.getUsernameOrEmail())
                                 .orElseThrow(() -> new UserNotFoundException(
                                                 "User not found with username or email: "
@@ -106,7 +103,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 }
 
                 String token = jwtUtil.generateToken(user.getUsername(), user.getEmail());
-                setAuthCookie(response, token);
 
                 return LoginResponseDTO.builder()
                                 .username(user.getUsername())
@@ -116,7 +112,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
 
      @Override
-        public RegisterResponseDTO register(RegisterRequestDTO requestDto, HttpServletResponse response) throws InvalidInputException {
+        @Transactional
+        public RegisterResponseDTO register(RegisterRequestDTO requestDto) throws InvalidInputException {
                 log.debug("Registering user with username: {} - email {}", requestDto.getUsername(),
                                 requestDto.getEmail());
                 if (userRepo.findByUsername(requestDto.getUsername()).isPresent()) {
@@ -137,12 +134,25 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 user.setEmail(requestDto.getEmail());
                 user.setPassword(encodedPassword);
 
-                user.getRoles().add(new Role(Authority.ROLE_USER));
+                // Find or create the USER role
+                log.info("Looking for role: {}", Authority.ROLE_USER.name());
+    Role userRole = roleRepo.findByAuthority(Authority.ROLE_USER);
+    if (userRole == null) {
+        log.info("Role not found, creating new role");
+        userRole = roleRepo.save(new Role(Authority.ROLE_USER));
+        log.info("Role created with ID: {}", userRole.getId());
+    } else {
+        log.info("Found existing role with ID: {}", userRole.getId());
+    }
+    
+    log.info("Adding role to user");
+    user.getRoles().add(userRole);
+    
+    log.info("Saving user to database");
                 user = userRepo.save(user);
+                log.info("User saved successfully with ID: {}, Username: {}", user.getId(), user.getUsername());
 
                 String token = jwtUtil.generateToken(user.getUsername(), user.getEmail());
-
-                setAuthCookie(response, token);
 
                 return RegisterResponseDTO.builder()
                                 .username(user.getUsername())
@@ -151,12 +161,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                                 .build();
         }
 
-        public void logout(HttpServletResponse response) {
-                clearAuthCookie(response);
-        }
-
-        public UserInfoDTO getCurrentUser(HttpServletRequest request) {
-                String token = extractTokenFromCookie(request.getCookies());
+        public UserInfoDTO getCurrentUser(String token) {
                 if (token != null && !token.isEmpty()) {
                         try {
                                 String username = jwtUtil.extractUsername(token);
@@ -178,51 +183,35 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                                 .build();
         }
 
-        public void setAuthCookie(HttpServletResponse response, String token) {
-                Cookie cookie = new Cookie(AUTH_COOKIE_NAME, token);
-                cookie.setHttpOnly(true);
-                cookie.setSecure(false);
-                cookie.setPath("/");
-                cookie.setMaxAge(COOKIE_MAX_AGE);
-
-                response.addCookie(cookie);
-                log.debug("Authentication cookie cleared");
-        }
-
-        private void clearAuthCookie(HttpServletResponse response) {
-                Cookie cookie = new Cookie(AUTH_COOKIE_NAME, "");
-                cookie.setHttpOnly(true);
-                cookie.setSecure(false);
-                cookie.setPath("/");
-                cookie.setMaxAge(0);
-
-                response.addCookie(cookie);
-                log.debug("Authentication cookie cleared");
-        }
-
-        public String extractTokenFromCookie(Cookie[] cookies) {
-                if (cookies != null) {
-                        for (Cookie cookie : cookies) {
-                                if (AUTH_COOKIE_NAME.equals(cookie.getName())) {
-                                        return cookie.getValue();
-                                }
-                        }
-                }
-                return null;
-        }
-
-        public boolean validateTokenFromCookie(Cookie[] cookies) {
-                String token = extractTokenFromCookie(cookies);
+        public boolean validateToken(String token) {
                 if (token != null && !token.isEmpty()) {
                         try {
                                 String username = jwtUtil.extractUsername(token);
                                 return jwtUtil.validateToken(token, username);
                         } catch (Exception e) {
-                                log.error("Error validating token from cookie: {}", e.getMessage());
+                                log.error("Error validating token: {}", e.getMessage());
                                 return false;
                         }
                 }
                 return false;
+        }
+
+        public UserInfoDTO getUserInfoByUsername(String username) {
+                try {
+                        User user = userRepo.findByUsername(username)
+                                        .orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
+                        
+                        return UserInfoDTO.builder()
+                                        .username(user.getUsername())
+                                        .email(user.getEmail())
+                                        .authenticated(true)
+                                        .build();
+                } catch (Exception e) {
+                        log.error("Error fetching user info for username: {}", username);
+                        return UserInfoDTO.builder()
+                                        .authenticated(false)
+                                        .build();
+                }
         }
     
 }

@@ -11,6 +11,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -31,7 +32,7 @@ public class User implements UserDetails {
     private boolean locked = false;
     private boolean enabled = true;
 
-   @ManyToMany @Cascade(CascadeType.ALL)
+   @ManyToMany(fetch = FetchType.EAGER)
     private Set<Role> roles = new HashSet<>();
     
     @Override
@@ -42,7 +43,23 @@ public class User implements UserDetails {
         .collect(Collectors.toSet());
     }
 
-    
+    @Override
+    public boolean isAccountNonExpired() {
+        return !expired;
+    }
 
-    
+    @Override
+    public boolean isAccountNonLocked() {
+        return !locked;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
 }

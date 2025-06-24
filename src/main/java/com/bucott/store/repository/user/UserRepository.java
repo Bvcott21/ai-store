@@ -1,4 +1,4 @@
-package com.bucott.store.repository;
+package com.bucott.store.repository.user;
 
 import java.util.Optional;
 
