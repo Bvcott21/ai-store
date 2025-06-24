@@ -1,10 +1,9 @@
 package com.bucott.store.model.product;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -20,10 +19,10 @@ public class Product {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long productId;
 
-    @NotNull @Min(5) @Max(50)
+    @NotNull @Size(min=5, max=50)
     private String name;
 
-    @NotNull @Min(10) @Max(500)
+    @NotNull @Size(min=10, max=500)
     private String description;
 
     @Positive

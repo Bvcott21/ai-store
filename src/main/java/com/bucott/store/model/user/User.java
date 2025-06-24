@@ -26,19 +26,19 @@ public class User implements UserDetails {
     @Email @NotNull
     private String email;
 
-    @Min(8) @Max(50) @NotNull
+    @Size(min=8, max=100) @NotNull
     private String password;
 
-    @Min(2) @Max(50) @NotNull
+    @Size(min=2, max=50) @NotNull
     private String firstName;
 
-    @Min(2) @Max(50) @NotNull
+    @Size(min=2, max=50) @NotNull
     private String lastName;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Address address;
 
-    @Min(10) @Max(15) @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone number must be between 10 and 15 digits long and can start with a '+'")
+    @Size(min=10, max=15) @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone number must be between 10 and 15 digits long and can start with a '+'")
     private String phoneNumber;
     private boolean expired = false;
     private boolean locked = false;
