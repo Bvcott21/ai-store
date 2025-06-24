@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import com.bucott.store.service.user.UserDetailsServiceImpl;
 import com.bucott.store.util.JwtUtil;
@@ -15,10 +16,13 @@ import com.bucott.store.util.JwtUtil;
 public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+    private final CorsConfigurationSource corsConfigurationSource;
 
-    public SecurityConfig(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService) {
+    public SecurityConfig(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService, 
+                         CorsConfigurationSource corsConfigurationSource) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.corsConfigurationSource = corsConfigurationSource;
     }
 
     @Bean
@@ -33,6 +37,7 @@ public class SecurityConfig {
     @Bean 
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .csrf(csrf -> csrf.disable())
             // Allow H2 console to render its frames
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
