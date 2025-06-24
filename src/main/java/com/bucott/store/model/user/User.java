@@ -5,18 +5,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
+import com.bucott.store.model.address.Address;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -25,9 +19,27 @@ import lombok.NoArgsConstructor;
 public class User implements UserDetails {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotNull
     private String username;
+
+    @Email @NotNull
     private String email;
+
+    @Min(8) @Max(50) @NotNull
     private String password;
+
+    @Min(2) @Max(50) @NotNull
+    private String firstName;
+
+    @Min(2) @Max(50) @NotNull
+    private String lastName;
+
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private Address address;
+
+    @Min(10) @Max(15) @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone number must be between 10 and 15 digits long and can start with a '+'")
+    private String phoneNumber;
     private boolean expired = false;
     private boolean locked = false;
     private boolean enabled = true;

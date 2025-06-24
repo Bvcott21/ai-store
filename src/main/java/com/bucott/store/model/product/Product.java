@@ -1,6 +1,10 @@
 package com.bucott.store.model.product;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -15,10 +19,20 @@ import java.util.Set;
 public class Product {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long productId;
+
+    @NotNull @Min(5) @Max(50)
     private String name;
+
+    @NotNull @Min(10) @Max(500)
     private String description;
+
+    @Positive
     private BigDecimal price;
+
+    @Positive
     private BigDecimal cost;
+
+    @NotNull
     private int currentStock;
 
     @CreationTimestamp
@@ -27,6 +41,7 @@ public class Product {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @NotNull
     @ManyToMany
     @JoinTable(
         name = "product_category_mapping",
