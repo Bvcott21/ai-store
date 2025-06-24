@@ -27,7 +27,12 @@ public class Product {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany
+    @JoinTable(
+        name = "product_category_mapping",
+        joinColumns = @JoinColumn(name = "product_id"),
+        inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
     private Set<ProductCategory> categories = new HashSet<>();
 
     public Product(String name, String description, BigDecimal price, BigDecimal cost, int currentStock) {
