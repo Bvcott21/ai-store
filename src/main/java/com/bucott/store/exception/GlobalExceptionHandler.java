@@ -3,6 +3,9 @@ package com.bucott.store.exception;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.bucott.store.exception.product.InsufficientStockException;
+import com.bucott.store.exception.product.InvalidProductDataException;
+import com.bucott.store.exception.product.ProductNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -15,12 +18,12 @@ import com.bucott.store.exception.user.UserNotFoundException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler({EmailNotFoundException.class, UserNotFoundException.class})
+    @ExceptionHandler({EmailNotFoundException.class, UserNotFoundException.class, ProductNotFoundException.class})
     public ResponseEntity<Object> handleUserNotFoundException(Exception ex) {
         return buildErrorResponse(ex, "User not found", HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler({InvalidCredentialsException.class, InvalidInputException.class}) 
+    @ExceptionHandler({InvalidCredentialsException.class, InvalidInputException.class, InvalidProductDataException.class, InsufficientStockException.class})
     public ResponseEntity<Object> handleInvalidInputException(Exception ex) {
         return buildErrorResponse(ex, "Invalid input", HttpStatus.BAD_REQUEST);
     }
