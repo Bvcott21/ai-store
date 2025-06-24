@@ -1,15 +1,17 @@
 package com.bucott.store.controller.product;
 
+import com.bucott.store.dto.common.PagedResponse;
 import com.bucott.store.dto.product.ProductCreateUpdateRequestDTO;
 import com.bucott.store.dto.product.ProductCreateUpdateResponseDTO;
+import com.bucott.store.dto.product.ProductInfoDTO;
 import com.bucott.store.model.product.Product;
 import com.bucott.store.service.product.ProductService;
-import com.bucott.store.service.product.ProductServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -25,9 +27,16 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() {
-        log.info("Received request to fetch all products");
-        return ResponseEntity.ok(productService.getAllProducts());
+    public ResponseEntity<PagedResponse<ProductInfoDTO>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "productId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        log.info("Received request to fetch products with pagination: page={}, size={}, sortBy={}, sortDir={}", 
+                page, size, sortBy, sortDir);
+        
+        PagedResponse<ProductInfoDTO> products = productService.getAllProducts(page, size, sortBy, sortDir);
+        return ResponseEntity.ok(products);
     }
 
     @GetMapping("/{productId}")
@@ -37,14 +46,14 @@ public class ProductController {
 
     //genetate test
     @PostMapping
-    public ResponseEntity<ProductCreateUpdateResponseDTO> createProduct(@RequestBody ProductCreateUpdateRequestDTO product) {
+    public ResponseEntity<ProductCreateUpdateResponseDTO> createProduct(@Valid @RequestBody ProductCreateUpdateRequestDTO product) {
         log.info("Received request to create product: {}", product);
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(product));
     }
 
     // generate tests
     @PutMapping("/{productId}")
-    public ResponseEntity<ProductCreateUpdateResponseDTO> updateProduct(@PathVariable Long productId, @RequestBody ProductCreateUpdateRequestDTO product) {
+    public ResponseEntity<ProductCreateUpdateResponseDTO> updateProduct(@PathVariable Long productId, @Valid @RequestBody ProductCreateUpdateRequestDTO product) {
         log.info("Received request to update product with ID: {}", productId);
         return ResponseEntity.ok(productService.updateProduct(productId, product));
     }

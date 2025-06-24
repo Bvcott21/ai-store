@@ -11,12 +11,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 import com.bucott.store.dto.auth.LoginRequestDTO;
 import com.bucott.store.dto.auth.LoginResponseDTO;
 import com.bucott.store.dto.auth.RegisterRequestDTO;
 import com.bucott.store.dto.auth.RegisterResponseDTO;
-import com.bucott.store.service.user.UserDetailsServiceImpl;
+import com.bucott.store.service.auth.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,10 +36,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class AuthController {
     // logging dependency
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
-    UserDetailsServiceImpl  userDetailsService;
+    private final AuthService authService;
 
-    public AuthController(UserDetailsServiceImpl userDetailsService) {
-        this.userDetailsService = userDetailsService;
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
     
@@ -59,19 +60,10 @@ public class AuthController {
         }
     )
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
         log.info("Login attempt for user: {}", loginRequestDTO.getUsernameOrEmail());
-        
-        try {
-            var loginResponse = userDetailsService.authenticate(loginRequestDTO);
-            return ResponseEntity.ok(loginResponse);
-        } catch(Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", e.getMessage());
-            errorResponse.put("message", "Login failed: " + e.getMessage());
-            errorResponse.put("success", false);
-            return ResponseEntity.badRequest().body(errorResponse);
-        }
+        var loginResponse = authService.authenticate(loginRequestDTO);
+        return ResponseEntity.ok(loginResponse);
     }
     
 
@@ -91,19 +83,10 @@ public class AuthController {
         }
     )
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequestDTO registerRequestDTO) {
+    public ResponseEntity<RegisterResponseDTO> register(@Valid @RequestBody RegisterRequestDTO registerRequestDTO) {
         log.info("Register attempt for user: {}", registerRequestDTO.getUsername());
-        
-        try {
-            var registerResponse = userDetailsService.register(registerRequestDTO);
-            return ResponseEntity.ok(registerResponse);
-        } catch(Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", e.getMessage());
-            errorResponse.put("message", "Registration failed: " + e.getMessage());
-            errorResponse.put("success", false);
-            return ResponseEntity.badRequest().body(errorResponse);
-        }
+        var registerResponse = authService.register(registerRequestDTO);
+        return ResponseEntity.ok(registerResponse);
     }            
     
     @PostMapping("/logout")
@@ -122,11 +105,11 @@ public class AuthController {
         
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
             String username = authentication.getName();
-            var userInfo = userDetailsService.getUserInfoByUsername(username);
+            var userInfo = authService.getUserInfoByUsername(username);
             return ResponseEntity.ok(userInfo);
         }
         
-        var userInfo = userDetailsService.getUserInfoByUsername(null);
+        var userInfo = authService.getUserInfoByUsername(null);
         return ResponseEntity.ok(userInfo);
     }
 
