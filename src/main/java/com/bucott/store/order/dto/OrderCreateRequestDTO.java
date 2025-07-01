@@ -1,0 +1,4 @@
+package com.bucott.store.order.dto;
+
+public class OrderCreateRequestDTO {
+}

@@ -1,17 +1,17 @@
 package com.bucott.store.config;
 
-import com.bucott.store.model.address.Address;
-import com.bucott.store.model.address.AddressType;
-import com.bucott.store.model.product.Product;
-import com.bucott.store.model.product.ProductCategory;
-import com.bucott.store.model.user.Authority;
-import com.bucott.store.model.user.Role;
-import com.bucott.store.model.user.User;
-import com.bucott.store.repository.address.AddressRepository;
-import com.bucott.store.repository.product.ProductCategoryRepository;
-import com.bucott.store.repository.product.ProductRepository;
-import com.bucott.store.repository.user.RoleRepository;
-import com.bucott.store.repository.user.UserRepository;
+import com.bucott.store.address.model.Address;
+import com.bucott.store.address.model.AddressType;
+import com.bucott.store.product.model.Product;
+import com.bucott.store.product.model.ProductCategory;
+import com.bucott.store.user.model.Authority;
+import com.bucott.store.user.model.Role;
+import com.bucott.store.user.model.User;
+import com.bucott.store.address.repository.AddressRepository;
+import com.bucott.store.product.repository.ProductCategoryRepository;
+import com.bucott.store.product.repository.ProductRepository;
+import com.bucott.store.user.repository.RoleRepository;
+import com.bucott.store.user.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -22,7 +22,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 @Component
 public class DataLoader implements CommandLineRunner {
