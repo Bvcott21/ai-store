@@ -18,6 +18,8 @@ public interface UserMapper {
     @Mapping(target = "enabled", constant = "true")
     @Mapping(target = "roles", ignore = true) // Roles will be set separately
     @Mapping(target = "authorities", ignore = true) // Authorities derived from roles
+    @Mapping(target = "firstName", source = "firstName")
+    @Mapping(target = "lastName", source = "lastName")
     @Mapping(target = "address", source = "address")
     User toEntity(RegisterRequestDTO dto);
 

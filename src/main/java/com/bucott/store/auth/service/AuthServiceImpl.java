@@ -17,13 +17,14 @@ import com.bucott.store.user.model.User;
 import com.bucott.store.user.repository.RoleRepository;
 import com.bucott.store.user.repository.UserRepository;
 import com.bucott.store.security.util.JwtUtil;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Service @AllArgsConstructor
 public class AuthServiceImpl implements AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
     
@@ -33,16 +34,6 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final AddressMapper addressMapper;
-
-    public AuthServiceImpl(UserRepository userRepo, RoleRepository roleRepo, JwtUtil jwtUtil, 
-                          PasswordEncoder passwordEncoder, UserMapper userMapper, AddressMapper addressMapper) {
-        this.userRepo = userRepo;
-        this.roleRepo = roleRepo;
-        this.jwtUtil = jwtUtil;
-        this.passwordEncoder = passwordEncoder;
-        this.userMapper = userMapper;
-        this.addressMapper = addressMapper;
-    }
 
     @Override
     public LoginResponseDTO authenticate(LoginRequestDTO requestDto) throws UserNotFoundException, InvalidCredentialsException {
@@ -66,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public RegisterResponseDTO register(RegisterRequestDTO requestDto) throws InvalidInputException {
-        log.debug("Registering user with username: {} - email {}", requestDto.getUsername(), requestDto.getEmail());
+        log.debug("Registering user with username: {} - email {}", requestDto.username(), requestDto.email());
         
         validateRegistrationRequest(requestDto);
 
@@ -74,10 +65,10 @@ public class AuthServiceImpl implements AuthService {
         User user = userMapper.toEntity(requestDto);
         
         // Set encoded password
-        user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        user.setPassword(passwordEncoder.encode(requestDto.password()));
         
         // Map address separately
-        Address address = addressMapper.toEntity(requestDto.getAddress());
+        Address address = addressMapper.toEntity(requestDto.address());
         user.setAddress(address);
 
         // Set user role
@@ -153,13 +144,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void validateRegistrationRequest(RegisterRequestDTO requestDto) throws InvalidInputException {
-        if (userRepo.findByUsername(requestDto.getUsername()).isPresent()) {
+        if (userRepo.findByUsername(requestDto.username()).isPresent()) {
             throw new InvalidInputException("Username already exists");
         }
-        if (userRepo.findByEmail(requestDto.getEmail()).isPresent()) {
+        if (userRepo.findByEmail(requestDto.email()).isPresent()) {
             throw new InvalidInputException("Email already exists");
         }
-        if (!requestDto.getPassword().equals(requestDto.getConfirmPassword())) {
+        if (!requestDto.password().equals(requestDto.confirmPassword())) {
             throw new InvalidInputException("Passwords do not match");
         }
     }

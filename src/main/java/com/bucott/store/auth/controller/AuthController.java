@@ -84,7 +84,7 @@ public class AuthController {
     )
     @PostMapping("/register")
     public ResponseEntity<RegisterResponseDTO> register(@Valid @RequestBody RegisterRequestDTO registerRequestDTO) {
-        log.info("Register attempt for user: {}", registerRequestDTO.getUsername());
+        log.info("Register attempt for user: {}", registerRequestDTO.username());
         var registerResponse = authService.register(registerRequestDTO);
         return ResponseEntity.ok(registerResponse);
     }            
