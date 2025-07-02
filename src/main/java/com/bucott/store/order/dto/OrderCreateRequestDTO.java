@@ -1,4 +1,3 @@
 package com.bucott.store.order.dto;
 
-public class OrderCreateRequestDTO {
-}
+public record OrderCreateRequestDTO() { }

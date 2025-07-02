@@ -37,21 +37,18 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponseDTO authenticate(LoginRequestDTO requestDto) throws UserNotFoundException, InvalidCredentialsException {
-        User user = userRepo.findByUsernameOrEmail(requestDto.getUsernameOrEmail())
+        User user = userRepo.findByUsernameOrEmail(requestDto.usernameOrEmail())
                 .orElseThrow(() -> new UserNotFoundException(
-                        "User not found with username or email: " + requestDto.getUsernameOrEmail()));
+                        "User not found with username or email: " + requestDto.usernameOrEmail()));
 
-        if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
-            throw new InvalidCredentialsException("Invalid password for user: " + requestDto.getUsernameOrEmail());
+        if (!passwordEncoder.matches(requestDto.password(), user.getPassword())) {
+            throw new InvalidCredentialsException("Invalid password for user: " + requestDto.usernameOrEmail());
         }
 
         String token = jwtUtil.generateToken(user.getUsername(), user.getEmail());
 
-        return LoginResponseDTO.builder()
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .token(token)
-                .build();
+        LoginResponseDTO response = new LoginResponseDTO(user.getUsername(), user.getEmail(), token);
+        return response;
     }
 
     @Override
@@ -82,11 +79,15 @@ public class AuthServiceImpl implements AuthService {
         // Generate token
         String token = jwtUtil.generateToken(user.getUsername(), user.getEmail());
 
-        // Use MapStruct to convert entity to response DTO
-        RegisterResponseDTO response = userMapper.toRegisterResponseDTO(user);
-        response.setToken(token);
-        
-        return response;
+       return new RegisterResponseDTO(
+                        user.getUsername(),
+                        user.getEmail(),
+                        token,
+                        user.getFirstName(),
+                        user.getLastName(),
+                        user.getPhoneNumber(),
+                        addressMapper.toInfoDTO(address));
+
     }
 
     @Override
@@ -97,19 +98,16 @@ public class AuthServiceImpl implements AuthService {
                 String email = jwtUtil.extractEmail(token);
 
                 if (jwtUtil.validateToken(token, username)) {
-                    return UserInfoDTO.builder()
-                            .username(username)
-                            .email(email)
-                            .authenticated(true)
-                            .build();
+                    return new UserInfoDTO(
+                            username,
+                            email,
+                            true);
                 }
             } catch (Exception e) {
                 log.error("Error extracting user info from token: {}", e.getMessage());
             }
         }
-        return UserInfoDTO.builder()
-                .authenticated(false)
-                .build();
+        return new UserInfoDTO(null, null, false);
     }
 
     @Override
@@ -132,14 +130,10 @@ public class AuthServiceImpl implements AuthService {
             User user = userRepo.findByUsername(username)
                     .orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
 
-            UserInfoDTO userInfo = userMapper.toUserInfoDTO(user);
-            userInfo.setAuthenticated(true);
-            return userInfo;
+            return new UserInfoDTO(user.getUsername(), user.getEmail(), true);
         } catch (Exception e) {
             log.error("Error fetching user info for username: {}", username);
-            return UserInfoDTO.builder()
-                    .authenticated(false)
-                    .build();
+            return new UserInfoDTO(null, null, false);
         }
     }
 

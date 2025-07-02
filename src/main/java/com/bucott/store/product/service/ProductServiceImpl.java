@@ -84,26 +84,26 @@ public class ProductServiceImpl implements ProductService {
     public ProductCreateUpdateResponseDTO createProduct(ProductCreateUpdateRequestDTO productDTO) {
         log.info("Creating new product: {}", productDTO);
 
-        if (productDTO.getPrice() == null || productDTO.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            log.error("Invalid product price: {}", productDTO.getPrice());
+        if (productDTO.price() == null || productDTO.price().compareTo(BigDecimal.ZERO) <= 0) {
+            log.error("Invalid product price: {}", productDTO.price());
             throw new IllegalArgumentException("Product price must be greater than zero");
         }
 
-        if (productDTO.getCurrentStock() < 0) {
-            log.error("Invalid current stock: {}", productDTO.getCurrentStock());
+        if (productDTO.currentStock() < 0) {
+            log.error("Invalid current stock: {}", productDTO.currentStock());
             throw new IllegalArgumentException("Current stock cannot be negative");
         }
 
         Product product = new Product(
-                productDTO.getName(),
-                productDTO.getDescription(),
-                productDTO.getPrice(),
-                productDTO.getCost(),
-                productDTO.getCurrentStock()
+                productDTO.name(),
+                productDTO.description(),
+                productDTO.price(),
+                productDTO.cost(),
+                productDTO.currentStock()
         );
 
         product.setCategories(new HashSet<>());
-        for (Long categoryId : productDTO.getCategoryIds()) {
+        for (Long categoryId : productDTO.categoryIds()) {
             ProductCategory category = productCategoryRepository.findById(categoryId)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid category ID: " + categoryId));
             product.getCategories().add(category);
@@ -133,20 +133,18 @@ public class ProductServiceImpl implements ProductService {
 
         log.info("Product created successfully with ID: {}", savedProduct.getProductId());
 
-        return ProductCreateUpdateResponseDTO
-                .builder()
-                .productId(savedProduct.getProductId())
-                .name(savedProduct.getName())
-                .description(savedProduct.getDescription())
-                .price(savedProduct.getPrice().doubleValue())
-                .cost(savedProduct.getCost().doubleValue())
-                .currentStock(savedProduct.getCurrentStock())
-                .categoryIds(savedProduct.getCategories().stream()
+        return new ProductCreateUpdateResponseDTO(
+                savedProduct.getProductId(),
+                savedProduct.getName(),
+                savedProduct.getDescription(),
+                savedProduct.getPrice().doubleValue(),
+                savedProduct.getCost().doubleValue(),
+                savedProduct.getCurrentStock(),
+                savedProduct.getCategories().stream()
                         .map(ProductCategory::getProductCategoryId)
-                        .toArray(Long[]::new))
-                .createdAt(savedProduct.getCreatedAt().toString())
-                .updatedAt(savedProduct.getUpdatedAt().toString())
-                .build();
+                        .toArray(Long[]::new),
+                savedProduct.getCreatedAt().toString(),
+                savedProduct.getUpdatedAt().toString());
     }
 
     @Override
@@ -158,27 +156,27 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductNotFoundException(productId);
         }
 
-        if (productDTO.getPrice() == null || productDTO.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            log.error("Invalid product price: {}", productDTO.getPrice());
+        if (productDTO.price() == null || productDTO.price().compareTo(BigDecimal.ZERO) <= 0) {
+            log.error("Invalid product price: {}", productDTO.price());
             throw new IllegalArgumentException("Product price must be greater than zero");
         }
 
-        if (productDTO.getCurrentStock() < 0) {
-            log.error("Invalid current stock: {}", productDTO.getCurrentStock());
+        if (productDTO.currentStock() < 0) {
+            log.error("Invalid current stock: {}", productDTO.currentStock());
             throw new IllegalArgumentException("Current stock cannot be negative");
         }
 
         Product product = new Product(
-                productDTO.getName(),
-                productDTO.getDescription(),
-                productDTO.getPrice(),
-                productDTO.getCost(),
-                productDTO.getCurrentStock()
+                productDTO.name(),
+                productDTO.description(),
+                productDTO.price(),
+                productDTO.cost(),
+                productDTO.currentStock()
         );
 
         product.setProductId(productId);
         product.setCategories(new HashSet<>());
-        for (Long categoryId : productDTO.getCategoryIds()) {
+        for (Long categoryId : productDTO.categoryIds()) {
             ProductCategory category = productCategoryRepository.findById(categoryId)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid category ID: " + categoryId));
             product.getCategories().add(category);
@@ -187,20 +185,18 @@ public class ProductServiceImpl implements ProductService {
         Product updatedProduct = productRepository.save(product);
         log.info("Product updated successfully with ID: {}", updatedProduct.getProductId());
 
-        return ProductCreateUpdateResponseDTO
-                .builder()
-                .productId(updatedProduct.getProductId())
-                .name(updatedProduct.getName())
-                .description(updatedProduct.getDescription())
-                .price(updatedProduct.getPrice().doubleValue())
-                .cost(updatedProduct.getCost().doubleValue())
-                .currentStock(updatedProduct.getCurrentStock())
-                .categoryIds(updatedProduct.getCategories().stream()
+        return new ProductCreateUpdateResponseDTO(
+                updatedProduct.getProductId(),
+                updatedProduct.getName(),
+                updatedProduct.getDescription(),
+                updatedProduct.getPrice().doubleValue(),
+                updatedProduct.getCost().doubleValue(),
+                updatedProduct.getCurrentStock(),
+                updatedProduct.getCategories().stream()
                         .map(ProductCategory::getProductCategoryId)
-                        .toArray(Long[]::new))
-                .createdAt(updatedProduct.getCreatedAt().toString())
-                .updatedAt(updatedProduct.getUpdatedAt().toString())
-                .build();
+                        .toArray(Long[]::new),
+                updatedProduct.getCreatedAt().toString(),
+                updatedProduct.getUpdatedAt().toString());
     }
 
     @Override

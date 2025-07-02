@@ -61,7 +61,7 @@ public class AuthController {
     )
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
-        log.info("Login attempt for user: {}", loginRequestDTO.getUsernameOrEmail());
+        log.info("Login attempt for user: {}", loginRequestDTO.usernameOrEmail());
         var loginResponse = authService.authenticate(loginRequestDTO);
         return ResponseEntity.ok(loginResponse);
     }
