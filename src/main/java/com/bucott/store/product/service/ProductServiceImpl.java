@@ -63,13 +63,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> getAllProducts() {
-        log.info("Fetching all products");
-        return productRepository.findAll();
-    }
-
-    @Override
-    public Product getProductById(Long productId) {
+    public ProductInfoDTO getProductById(Long productId) {
         if (productId == null) {
             throw new IllegalArgumentException("Product ID cannot be null");
         }
@@ -77,7 +71,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
         log.info("Product found: {}", product);
-        return product;
+        return productMapper.toInfoDTO(product);
     }
 
     @Override
@@ -211,7 +205,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> getProductsByCategory(Long categoryId) {
+    public List<ProductInfoDTO> getProductsByCategory(Long categoryId) {
         log.info("Fetching prodcuts by category ID: {}", categoryId);
         List<Product> products = productRepository.findByCategories_ProductCategoryId(categoryId);
 
@@ -220,11 +214,11 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductNotFoundException("No products found for category ID: " + categoryId);
         }
         log.info("Found {} products for category ID: {}", products.size(), categoryId);
-        return products;
+        return convertToProductInfoDTOList(products);
     }
 
     @Override
-    public List<Product> searchProducts(String keyword) {
+    public List<ProductInfoDTO> searchProducts(String keyword) {
         log.info("Searching products with keyword: {}", keyword);
         List<Product> products = productRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(keyword, keyword);
         if (products.isEmpty()) {
@@ -232,11 +226,11 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductNotFoundException("No products found for keyword: " + keyword);
         }
         log.info("Found {} products for keyword: {}", products.size(), keyword);
-        return products;
+        return convertToProductInfoDTOList(products);
     }
 
     @Override
-    public List<Product> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
+    public List<ProductInfoDTO> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
         log.info("Fetching products by price range: {} - {}", minPrice, maxPrice);
         if (minPrice == null || maxPrice == null || minPrice.compareTo(BigDecimal.ZERO) < 0 || maxPrice.compareTo(BigDecimal.ZERO) < 0 || minPrice.compareTo(maxPrice) > 0) {
             log.error("Invalid price range: {} - {}", minPrice, maxPrice);
@@ -248,11 +242,11 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductNotFoundException("No products found in the price range: " + minPrice + " - " + maxPrice);
         }
         log.info("Found {} products in the price range: {} - {}", products.size(), minPrice, maxPrice);
-        return products;
+        return convertToProductInfoDTOList(products);
     }
 
     @Override
-    public List<Product> getProductsByStockAvailability(boolean inStock) {
+    public List<ProductInfoDTO> getProductsByStockAvailability(boolean inStock) {
         if (inStock) {
             log.info("Fetching products that are in stock");
             List<Product> products = productRepository.findByCurrentStockGreaterThan(0);
@@ -261,7 +255,7 @@ public class ProductServiceImpl implements ProductService {
                 throw new ProductNotFoundException("No products found that are in stock");
             }
             log.info("Found {} products that are in stock", products.size());
-            return products;
+            return convertToProductInfoDTOList(products);
         } else {
             log.info("Fetching products that are out of stock");
             List<Product> products = productRepository.findByCurrentStockLessThanEqual(0);
@@ -270,12 +264,12 @@ public class ProductServiceImpl implements ProductService {
                 throw new ProductNotFoundException("No products found that are out of stock");
             }
             log.info("Found {} products that are out of stock", products.size());
-            return products;
+            return convertToProductInfoDTOList(products);
         }
     }
 
     @Override
-    public List<Product> getProductsByDescription(String description) {
+    public List<ProductInfoDTO> getProductsByDescription(String description) {
         log.info("Fetching products by description containing: {}", description);
         if (description == null || description.isEmpty()) {
             log.error("Description cannot be null or empty");
@@ -287,11 +281,11 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductNotFoundException("No products found with description containing: " + description);
         }
         log.info("Found {} products with description containing: {}", products.size(), description);
-        return products;
+        return convertToProductInfoDTOList(products);
     }
 
     @Override
-    public List<Product> getProductsByCategoryAndPriceRange(Long categoryId, Double minPrice, Double maxPrice) {
+    public List<ProductInfoDTO> getProductsByCategoryAndPriceRange(Long categoryId, Double minPrice, Double maxPrice) {
         log.info("Fetching products by category ID: {} and price range: {} - {}", categoryId, minPrice, maxPrice);
         if (categoryId == null || minPrice == null || maxPrice == null || minPrice < 0 || maxPrice < 0 || minPrice > maxPrice) {
             log.error("Invalid parameters provided for category ID and price range");
@@ -304,11 +298,11 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductNotFoundException("No products found for category ID: " + categoryId + " and price range: " + minPrice + " - " + maxPrice);
         }
         log.info("Found {} products for category ID: {} and price range: {} - {}", products.size(), categoryId, minPrice, maxPrice);
-        return products;
+        return convertToProductInfoDTOList(products);
     }
 
     @Override
-    public List<Product> getProductsByName(String name) {
+    public List<ProductInfoDTO> getProductsByName(String name) {
         log.info("Fetching products by name containing: {}", name);
         if (name == null || name.isEmpty()) {
             log.error("Name cannot be null or empty");
@@ -320,7 +314,13 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductNotFoundException("No products found with name containing: " + name);
         }
         log.info("Found {} products with name containing: {}", products.size(), name);
-        return products;
+        return convertToProductInfoDTOList(products);
+    }
+
+    private List<ProductInfoDTO> convertToProductInfoDTOList(List<Product> products) {
+        return products.stream()
+                .map(productMapper::toInfoDTO)
+                .collect(Collectors.toList());
     }
 }
 

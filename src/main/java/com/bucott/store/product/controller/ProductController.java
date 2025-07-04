@@ -40,7 +40,7 @@ public class ProductController {
     }
 
     @GetMapping("/{productId}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long productId) {
+    public ResponseEntity<ProductInfoDTO> getProductById(@PathVariable Long productId) {
         return ResponseEntity.ok(productService.getProductById(productId));
     }
 
@@ -68,21 +68,21 @@ public class ProductController {
 
     // generate tests
     @GetMapping("/search/category/{categoryId}")
-    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable Long categoryId) {
+    public ResponseEntity<List<ProductInfoDTO>> getProductsByCategory(@PathVariable Long categoryId) {
         log.info("Received request to fetch products by category ID: {}", categoryId);
         return ResponseEntity.ok(productService.getProductsByCategory(categoryId));
     }
 
     // generate tests
     @GetMapping("/search/keyword/{keyword}")
-    public ResponseEntity<List<Product>> searchProductsByKeyword(@PathVariable String keyword) {
+    public ResponseEntity<List<ProductInfoDTO>> searchProductsByKeyword(@PathVariable String keyword) {
         log.info("Received request to search products by keyword: {}", keyword);
         return ResponseEntity.ok(productService.searchProducts(keyword));
     }
 
     // generate tests
     @GetMapping("/search/price-range")
-    public ResponseEntity<List<Product>> getProductsByPriceRange(@RequestParam Double minPrice, @RequestParam Double maxPrice) {
+    public ResponseEntity<List<ProductInfoDTO>> getProductsByPriceRange(@RequestParam Double minPrice, @RequestParam Double maxPrice) {
         log.info("Received request to fetch products by price range: {} - {}", minPrice, maxPrice);
         return ResponseEntity.ok(productService.getProductsByPriceRange(
             BigDecimal.valueOf(minPrice), BigDecimal.valueOf(maxPrice)));
@@ -90,21 +90,21 @@ public class ProductController {
 
     // generate tests
     @GetMapping("/search/stock")
-    public ResponseEntity<List<Product>> getProductsByStockAvailability(@RequestParam boolean inStock) {
+    public ResponseEntity<List<ProductInfoDTO>> getProductsByStockAvailability(@RequestParam boolean inStock) {
         log.info("Received request to fetch products by stock availability: {}", inStock);
         return ResponseEntity.ok(productService.getProductsByStockAvailability(inStock));
     }
 
     // generate tests
     @GetMapping("/search/description/{description}")
-    public ResponseEntity<List<Product>> searchProductsByDescription(@PathVariable String description) {
+    public ResponseEntity<List<ProductInfoDTO>> searchProductsByDescription(@PathVariable String description) {
         log.info("Received request to search products by description: {}", description);
         return ResponseEntity.ok(productService.getProductsByDescription(description));
     }
 
     // generate tests
     @GetMapping("/search/category-price-range")
-    public ResponseEntity<List<Product>> getProductsByCategoryAndPriceRange(
+    public ResponseEntity<List<ProductInfoDTO>> getProductsByCategoryAndPriceRange(
             @RequestParam Long categoryId, 
             @RequestParam Double minPrice, 
             @RequestParam Double maxPrice) {
@@ -114,7 +114,7 @@ public class ProductController {
 
     // generate tests
     @GetMapping("/search/name/{name}")
-    public ResponseEntity<List<Product>> searchProductsByName(@PathVariable String name) {
+    public ResponseEntity<List<ProductInfoDTO>> searchProductsByName(@PathVariable String name) {
         log.info("Received request to search products by name: {}", name);
         return ResponseEntity.ok(productService.getProductsByName(name));
     }
